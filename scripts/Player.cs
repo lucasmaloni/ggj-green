@@ -16,6 +16,17 @@ public partial class Player : CharacterBody2D
     {
         // Definimos a velocidade (atributo herdado) que será chamado em outros métodos
         Vector2 inputDirection = Input.GetVector("ui_left", "ui_right", "ui_up", "ui_down");
+
+        // Fazemos a matematica para definir se a movimentação é vertical ou horizontal apenas
+        if(Mathf.Abs(inputDirection.X) > Mathf.Abs(inputDirection.Y))
+        {
+            inputDirection.Y = 0;
+        }
+        else
+        {
+            inputDirection.X = 0;
+        }
+
         Velocity = inputDirection * Speed;
     }
 
