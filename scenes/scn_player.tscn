@@ -195,16 +195,19 @@ animations = [{
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mna1d"]
-size = Vector2(9, 18)
+size = Vector2(9.5, 5)
 
 [node name="Player" type="CharacterBody2D"]
 script = ExtResource("1_xhyg1")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_7exd5")
-animation = &"walk_h"
-frame_progress = 0.83916473
+animation = &"walk_down"
+frame_progress = 0.3713362
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(-0.5, -1)
+position = Vector2(0, 4)
 shape = SubResource("RectangleShape2D_mna1d")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+zoom = Vector2(5, 5)

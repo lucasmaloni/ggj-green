@@ -1,39 +1,54 @@
+using System;
 using Godot;
 
-public partial class Character : CharacterBody2D
+public partial class Player : CharacterBody2D
 {
     private AnimatedSprite2D _animatedSprite;
-	double movementSpeed = 200;
+	[Export]
+    public int Speed { get; set; } = 200;
 
     public override void _Ready()
     {
         _animatedSprite = GetNode<AnimatedSprite2D>("AnimatedSprite2D");
     }
 
+    public void GetInput()
+    {
+        // Definimos a velocidade (atributo herdado) que será chamado em outros métodos
+        Vector2 inputDirection = Input.GetVector("ui_left", "ui_right", "ui_up", "ui_down");
+        Velocity = inputDirection * Speed;
+    }
+
+    public void UpdateAnimation()
+    {
+        //Lida com a velocidade x e y para determinar a animação e só ela
+        if (Velocity.X > 0)
+        {
+            _animatedSprite.Play("walk_h");
+            _animatedSprite.FlipH = false;
+        }
+        else if (Velocity.X < 0)
+        {
+            _animatedSprite.Play("walk_h");
+            _animatedSprite.FlipH = true;
+        }
+        else if (Velocity.Y < 0)
+        {
+            _animatedSprite.Play("walk_up");
+        }
+        else if (Velocity.Y > 0)
+        {
+            _animatedSprite.Play("walk_down");
+        }
+        else
+        {
+            _animatedSprite.Play("idle");
+        }
+    }
     public override void _Process(double delta)
     {
-        if (Input.IsActionPressed("move_right"))
-        {
-            _animatedSprite.Play("walk_h");
-        }
-        else if (Input.IsActionPressed("move_left"))
-        {
-			// Por padrão, a animação de caminhar está direcionada para a direita
-			// Quando andamos para a esquerda setamos o flipHorizontal como true para virar a sprte para a esquerda
-			_animatedSprite.FlipH = true;
-            _animatedSprite.Play("walk_h");
-        }
-		else if (Input.IsActionPressed("walk_up"))
-		{
-			_animatedSprite.Play("walk_up");
-		}
-		else if (Input.IsActionPressed("walk_down"))
-		{
-			_animatedSprite.Play("walk_down");
-		}
-		else // Se nenhuma dessas teclas foram apertadas, usamos a animação padrão: idle
-		{
-			_animatedSprite.Play("idle");
-		}
+        GetInput();
+        MoveAndSlide();
+        UpdateAnimation();
     }
 }
