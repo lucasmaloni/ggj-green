@@ -1,6 +1,6 @@
 [gd_scene load_steps=29 format=3 uid="uid://wc6hf1wjre7k"]
 
-[ext_resource type="Texture2D" uid="uid://bqgun8vrdpjhr" path="res://assets/sprites/spr_player.png" id="1_q36f8"]
+[ext_resource type="Texture2D" uid="uid://bqgun8vrdpjhr" path="res://assets/sprites/level/spr_player.png" id="1_q36f8"]
 [ext_resource type="Script" uid="uid://v3drscbaymry" path="res://scripts/Player.cs" id="1_xhyg1"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_q36f8"]
@@ -203,7 +203,7 @@ script = ExtResource("1_xhyg1")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_7exd5")
 animation = &"walk_down"
-frame_progress = 0.3713362
+frame_progress = 0.4022715
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0, 4)
