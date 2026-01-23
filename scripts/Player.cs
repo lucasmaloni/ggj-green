@@ -3,16 +3,20 @@ using Godot;
 
 public partial class Player : CharacterBody2D
 {
+    [Export]
     private AnimatedSprite2D _animatedSprite;
 	[Export]
-    public int Speed { get; set; } = 200;
+    private int Speed { get; set; } = 200;
+
+    [Signal]
+    public delegate void onWaterSoilEventHandler(Player player);
 
     public override void _Ready()
     {
-        _animatedSprite = GetNode<AnimatedSprite2D>("AnimatedSprite2D");
+        
     }
 
-    public void GetInput()
+    private void GetInput()
     {
         // Definimos a velocidade (atributo herdado) que será chamado em outros métodos
         Vector2 inputDirection = Input.GetVector("ui_left", "ui_right", "ui_up", "ui_down");
@@ -25,6 +29,11 @@ public partial class Player : CharacterBody2D
         else
         {
             inputDirection.X = 0;
+        }
+
+        if (Input.IsActionPressed("place_water"))
+        {
+            this.waterSoil();
         }
 
         Velocity = inputDirection * Speed;
@@ -56,10 +65,16 @@ public partial class Player : CharacterBody2D
             _animatedSprite.Play("idle");
         }
     }
-    public override void _Process(double delta)
+    public override void _PhysicsProcess(double delta)
     {
         GetInput();
         MoveAndSlide();
         UpdateAnimation();
+    }
+
+    private void waterSoil()
+    {
+        //Implmentar
+        EmitSignal(SignalName.onWaterSoil, this);
     }
 }

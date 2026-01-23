@@ -197,8 +197,9 @@ animations = [{
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mna1d"]
 size = Vector2(9.5, 5)
 
-[node name="Player" type="CharacterBody2D"]
+[node name="Player" type="CharacterBody2D" node_paths=PackedStringArray("_animatedSprite")]
 script = ExtResource("1_xhyg1")
+_animatedSprite = NodePath("AnimatedSprite2D")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_7exd5")
