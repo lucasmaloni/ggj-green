@@ -6,8 +6,7 @@ public partial class Player : CharacterBody2D
     [Export]
     private AnimatedSprite2D _animatedSprite;
 	[Export]
-    private int Speed { get; set; } = 200;
-
+    private int Speed { get; set; } = 150;
     [Signal]
     public delegate void onWaterSoilEventHandler(Player player);
 
@@ -33,7 +32,7 @@ public partial class Player : CharacterBody2D
 
         if (Input.IsActionPressed("place_water"))
         {
-            this.waterSoil();
+            waterSoil();
         }
 
         Velocity = inputDirection * Speed;
@@ -65,6 +64,7 @@ public partial class Player : CharacterBody2D
             _animatedSprite.Play("idle");
         }
     }
+
     public override void _PhysicsProcess(double delta)
     {
         GetInput();
@@ -74,7 +74,7 @@ public partial class Player : CharacterBody2D
 
     private void waterSoil()
     {
-        //Implmentar
+        //Implmentar play da animação de aguar solo (lado do player)
         EmitSignal(SignalName.onWaterSoil, this);
     }
 }
