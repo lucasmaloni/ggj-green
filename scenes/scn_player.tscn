@@ -335,9 +335,10 @@ script = ExtResource("1_xhyg1")
 _animatedSprite = NodePath("AnimatedSprite2D")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1892481241]
-position = Vector2(1, 0)
 sprite_frames = SubResource("SpriteFrames_7exd5")
-animation = &"water_up"
+animation = &"water_h"
+frame = 2
+frame_progress = 1.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=263526815]
 position = Vector2(0, 4)

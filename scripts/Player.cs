@@ -3,119 +3,151 @@ using Godot;
 
 public partial class Player : CharacterBody2D
 {
-    [Export]
-    private AnimatedSprite2D _animatedSprite;
-	[Export]
-    private int Speed { get; set; } = 200;
+    // --- Configurações de Export ---
+    [Export] private AnimatedSprite2D _animatedSprite;
+    [Export] private int Speed { get; set; } = 200;
+    [Export] public int TileSize = 16; // Ajuste para o tamanho do seu grid (ex: 16, 32, 64)
 
-    [Signal]
-    public delegate void onWaterSoilEventHandler(Player player);
+    // --- Sinais ---
+    [Signal] public delegate void onWaterSoilEventHandler(Player player);
 
-    //variavel que controla o estado de regar 
+    // --- Variáveis de Controle de Estado ---
     private bool _isWatering = false;
+    private bool _isMoving = false;
+    private Vector2 _targetPosition = Vector2.Zero;
 
     public override void _Ready()
     {
+        // Garante que o alvo inicial seja onde o player começa
+        _targetPosition = GlobalPosition;
         
+        // Se esqueceu de arrastar o sprite no Inspector, tenta pegar via código
+        if (_animatedSprite == null)
+            _animatedSprite = GetNode<AnimatedSprite2D>("AnimatedSprite2D");
     }
 
-    private void GetInput()
+    public override void _PhysicsProcess(double delta)
     {
-        // Definimos a velocidade (atributo herdado) que será chamado em outros métodos
-        Vector2 inputDirection = Input.GetVector("ui_left", "ui_right", "ui_up", "ui_down");
+        // 1. BLOQUEIO: Se estiver regando, não faz mais nada.
+        if (_isWatering) return;
 
-        // Fazemos a matematica para definir se a movimentação é vertical ou horizontal apenas
-        if(Mathf.Abs(inputDirection.X) > Mathf.Abs(inputDirection.Y))
+        // 2. Lógica de movimentação
+        if (!_isMoving)
         {
-            inputDirection.Y = 0;
+            GetInputTile();
         }
         else
         {
-            inputDirection.X = 0;
+            MoveToTarget(delta);
         }
-
-        if (Input.IsActionPressed("place_water"))
-        {
-            this.waterSoil();  
-        }
-
-        Velocity = inputDirection * Speed;
     }
 
-    public void UpdateAnimation()
+    private void GetInputTile()
     {
+        // PRIORIDADE 1: Ação de Regar (Espaço/Ação configurada)
+        if (Input.IsActionJustPressed("place_water"))
+        {
+            waterSoil();
+            return; // Sai para não tentar andar no mesmo frame
+        }
 
+        // PRIORIDADE 2: Movimentação
+        Vector2 inputDirection = Input.GetVector("ui_left", "ui_right", "ui_up", "ui_down");
+
+        if (inputDirection != Vector2.Zero)
+        {
+            // Trava o movimento em apenas um eixo (Sua lógica original)
+            if (Mathf.Abs(inputDirection.X) > Mathf.Abs(inputDirection.Y))
+                inputDirection.Y = 0;
+            else
+                inputDirection.X = 0;
+
+            if (inputDirection == Vector2.Zero) return;
+
+            // Define o próximo quadrado
+            _targetPosition = GlobalPosition + inputDirection.Normalized() * TileSize;
+            _isMoving = true;
+
+            // Inicia a animação de caminhada passando a direção
+            UpdateAnimation(inputDirection);
+        }
+    }
+
+    private void MoveToTarget(double delta)
+    {
+        // Move suavemente em direção ao alvo
+        GlobalPosition = GlobalPosition.MoveToward(_targetPosition, Speed * (float)delta);
+
+        // Verifica se chegou (com margem de erro pequena)
+        if (GlobalPosition.IsEqualApprox(_targetPosition))
+        {
+            GlobalPosition = _targetPosition; // Snap para o valor exato
+            _isMoving = false;
+            
+            Vector2 input = Input.GetVector("ui_left", "ui_right", "ui_up", "ui_down");
+            if(input == Vector2.Zero)
+            {
+                UpdateAnimation(Vector2.Zero);
+            }
+        }
+    }
+
+    public void UpdateAnimation(Vector2 direction)
+    {
+        // Se estiver no meio da ação de regar, UpdateAnimation não pode mexer no sprite!
         if (_isWatering) return;
 
-        //Lida com a velocidade x e y para determinar a animação e só ela
-        if (Velocity.X > 0)
+        if (direction == Vector2.Zero)
+        {
+            _animatedSprite.Play("idle");
+            return;
+        }
+
+        if (direction.X > 0)
         {
             _animatedSprite.Play("walk_h");
             _animatedSprite.FlipH = false;
         }
-        else if (Velocity.X < 0)
+        else if (direction.X < 0)
         {
             _animatedSprite.Play("walk_h");
             _animatedSprite.FlipH = true;
         }
-        else if (Velocity.Y < 0)
+        else if (direction.Y < 0)
         {
             _animatedSprite.Play("walk_up");
         }
-        else if (Velocity.Y > 0)
+        else if (direction.Y > 0)
         {
             _animatedSprite.Play("walk_down");
         }
-        else
-        {
-            _animatedSprite.Play("idle");
-        }
-    }
-    public override void _PhysicsProcess(double delta)
-    {
-        
-        if (_isWatering) return;
-
-        GetInput();
-        MoveAndSlide();
-        UpdateAnimation();
     }
 
     private async void waterSoil()
     {
-        
-        if(_isWatering) return;
+        if (_isWatering) return;
 
         _isWatering = true;
-        Velocity = Vector2.Zero; //trava o jogador no tile que esta sendo aguado
-        string currentAnimation = _animatedSprite.Animation;
-
-        //troca de animações dependendo da direção que o player tava andando antes de apertar space
-        if (currentAnimation == "walk_up") 
-        {
-            _animatedSprite.Play("water_up");
-        }
-
-        else if (currentAnimation == "idle")
-        {
-            _animatedSprite.Play("water_down");
-        }
-
-        else if (currentAnimation == "walk_down") 
-        {
-            _animatedSprite.Play("water_down");
-        }
-        else 
-        {
-            _animatedSprite.Play("water_h");
-        }
-
-        //Implmentar
-        EmitSignal(SignalName.onWaterSoil, this);
+        Velocity = Vector2.Zero;
         
-        // espera a animação terminar 
-        await ToSignal(GetTree().CreateTimer(1.0), "timeout");
+        // Pega a animação atual para saber a direção
+        string currentAnim = _animatedSprite.Animation;
 
-         _isWatering = false; // devolve o controle ao jogador
+        // Toca a animação de regar correspondente
+        if (currentAnim == "walk_up") _animatedSprite.Play("water_up");
+        else if (currentAnim == "walk_down") _animatedSprite.Play("water_down");
+        else _animatedSprite.Play("water_h");
+
+        _animatedSprite.Frame = 0;
+
+        // Avisa o sistema de solo
+        EmitSignal(SignalName.onWaterSoil, this);
+
+        // Aguarda um tempo fixo (Timer) para garantir que destrave
+        // Ajuste 0.6f para o tempo que sua animação leva
+        await ToSignal(GetTree().CreateTimer(0.6f), "timeout");
+
+        _isWatering = false;
+        UpdateAnimation(Vector2.Zero); // Volta ao estado normal
     }
 }
