@@ -6,9 +6,13 @@ public partial class Player : CharacterBody2D
     [Export]
     private AnimatedSprite2D _animatedSprite;
 	[Export]
-    private int Speed { get; set; } = 150;
+    private int Speed { get; set; } = 200;
+
     [Signal]
     public delegate void onWaterSoilEventHandler(Player player);
+
+    //variavel que controla o estado de regar 
+    private bool _isWatering = false;
 
     public override void _Ready()
     {
@@ -32,7 +36,7 @@ public partial class Player : CharacterBody2D
 
         if (Input.IsActionPressed("place_water"))
         {
-            waterSoil();
+            this.waterSoil();  
         }
 
         Velocity = inputDirection * Speed;
@@ -40,6 +44,9 @@ public partial class Player : CharacterBody2D
 
     public void UpdateAnimation()
     {
+
+        if (_isWatering) return;
+
         //Lida com a velocidade x e y para determinar a animação e só ela
         if (Velocity.X > 0)
         {
@@ -64,17 +71,51 @@ public partial class Player : CharacterBody2D
             _animatedSprite.Play("idle");
         }
     }
-
     public override void _PhysicsProcess(double delta)
     {
+        
+        if (_isWatering) return;
+
         GetInput();
         MoveAndSlide();
         UpdateAnimation();
     }
 
-    private void waterSoil()
+    private async void waterSoil()
     {
-        //Implmentar play da animação de aguar solo (lado do player)
+        
+        if(_isWatering) return;
+
+        _isWatering = true;
+        Velocity = Vector2.Zero; //trava o jogador no tile que esta sendo aguado
+        string currentAnimation = _animatedSprite.Animation;
+
+        //troca de animações dependendo da direção que o player tava andando antes de apertar space
+        if (currentAnimation == "walk_up") 
+        {
+            _animatedSprite.Play("water_up");
+        }
+
+        else if (currentAnimation == "idle")
+        {
+            _animatedSprite.Play("water_down");
+        }
+
+        else if (currentAnimation == "walk_down") 
+        {
+            _animatedSprite.Play("water_down");
+        }
+        else 
+        {
+            _animatedSprite.Play("water_h");
+        }
+
+        //Implmentar
         EmitSignal(SignalName.onWaterSoil, this);
+        
+        // espera a animação terminar 
+        await ToSignal(GetTree().CreateTimer(1.0), "timeout");
+
+         _isWatering = false; // devolve o controle ao jogador
     }
 }
